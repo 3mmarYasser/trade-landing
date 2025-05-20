@@ -1,103 +1,269 @@
-import Image from "next/image";
+"use client"
+import TradingCard from "@/components/Home/trading-chart"
+import Navbar from "@/components/shared/Navbar"
+import AccountSummary from "@/components/Home/account-summary"
+import TradingTabs from "@/components/Home/trading-tabs"
+import TradingJournal from "@/components/Home/trading-journal"
+import Watchlist from "@/components/Home/watchlist"
+import ChatAssistant from "@/components/Home/chat-assistant"
+import LoadingScreen from "@/components/ui/LoadingScreen"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/Resizable"
+import { useEffect, useState, useRef } from "react"
+import { useLocalStorage } from "../hooks/useLocalStorage"
+import { motion, AnimatePresence } from "framer-motion"
 
-export default function Home() {
+const childrenAnimations = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.5 } 
+  }
+}
+
+export default function TradingDashboard() {
+  const DEFAULT_WIDTH = 370;
+  const MIN_WIDTH = 323;
+  const MAX_WIDTH = 457;
+  
+  const [rightPanelWidth, setRightPanelWidth] = useLocalStorage<number>("right-panel-width", DEFAULT_WIDTH);
+  const [isMobile, setIsMobile] = useState(false);
+  const [minSizePercent, setMinSizePercent] = useState(15);
+  const [maxSizePercent, setMaxSizePercent] = useState(35);
+  const [isLoading, setIsLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const calculatePercentage = (pixelWidth: number, containerWidth: number) => {
+    return (pixelWidth / containerWidth) * 100;
+  };
+  
+  const getRightPanelPercentage = () => {
+    if (!containerRef.current) return 25; 
+    
+    const containerWidth = containerRef.current.offsetWidth;
+    const constrainedWidth = Math.max(MIN_WIDTH, Math.min(rightPanelWidth, MAX_WIDTH));
+    return calculatePercentage(constrainedWidth, containerWidth);
+  };
+  
+  const handleResizeEnd = (sizes: number[]) => {
+    if (!containerRef.current) return;
+    
+    const containerWidth = containerRef.current.offsetWidth;
+    const newWidth = (sizes[1] / 100) * containerWidth;
+    
+    const constrainedWidth = Math.max(MIN_WIDTH, Math.min(newWidth, MAX_WIDTH));
+    setRightPanelWidth(constrainedWidth);
+  };
+  
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        setMinSizePercent(calculatePercentage(MIN_WIDTH, containerWidth));
+        setMaxSizePercent(calculatePercentage(MAX_WIDTH, containerWidth));
+      }
+    };
+    
+    checkIfMobile();
+    
+    window.addEventListener('resize', checkIfMobile);
+    
+    const timer = setTimeout(() => {
+      if (document.readyState === 'complete') {
+        setIsLoading(false);
+      } else {
+        window.addEventListener('load', () => setIsLoading(false));
+      }
+    }, 1200);
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+      window.removeEventListener('load', () => setIsLoading(false));
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <AnimatePresence>
+        {isLoading && <LoadingScreen appName="Trade Landing" />}
+      </AnimatePresence>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: isLoading ? 0.3 : 0 }}
+        className="min-h-screen flex flex-col bg-gradient-to-br from-[#e4e2f9] to-white relative overflow-hidden"
+      >
+        <motion.div
+          variants={childrenAnimations}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: isLoading ? 0.5 : 0.1 }}
+        >
+          <Navbar />
+        </motion.div>
+        
+        <motion.div
+          variants={childrenAnimations}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: isLoading ? 0.7 : 0.2 }}
+        >
+          <AccountSummary />
+        </motion.div>
+
+        {isMobile ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: isLoading ? 0.9 : 0.3 }}
+            className="p-4 space-y-4 flex-grow"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ 
+                duration: 0.5, 
+                delay: isLoading ? 1.1 : 0.4, 
+                type: "spring", 
+                stiffness: 100 
+              }}
+              className="bg-black rounded-[28px] overflow-hidden h-full"
+            >
+              <TradingCard />
+              <TradingTabs />
+              <TradingJournal />
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: isLoading ? 1.3 : 0.5 }}
+              className="w-full"
+            >
+              <Watchlist />
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: isLoading ? 1.5 : 0.6 }}
+              className="w-full"
+            >
+              <ChatAssistant />
+            </motion.div>
+          </motion.div>
+        ) :
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: isLoading ? 0.9 : 0.3 }}
+            ref={containerRef} 
+            className="p-4 flex-grow flex"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+            <ResizablePanelGroup
+              direction="horizontal"
+              onLayout={handleResizeEnd}
+              className="w-full h-full"
+            >
+              <ResizablePanel
+                defaultSize={100 - getRightPanelPercentage()}
+                minSize={60}
+              >
+                <ResizablePanelGroup direction="vertical" className="h-full">
+                  <ResizablePanel defaultSize={62} minSize={50}>
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.6, 
+                        delay: isLoading ? 1.1 : 0.4, 
+                        type: "spring", 
+                        stiffness: 100 
+                      }}
+                      whileHover={{ scale: 1.005 }}
+                      className="bg-black rounded-[28px] overflow-hidden h-full"
+                    >
+                      <TradingCard />
+                    </motion.div>
+                  </ResizablePanel>
+                  
+                  <ResizableHandle withHandle />
+                  
+                  <ResizablePanel defaultSize={38} minSize={25}>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.6, 
+                        delay: isLoading ? 1.3 : 0.5, 
+                        type: "spring", 
+                        stiffness: 100 
+                      }}
+                      whileHover={{ scale: 1.005 }}
+                      className="bg-black rounded-[28px] overflow-hidden h-full flex flex-col"
+                    >
+                      <TradingTabs />
+                      <div className="flex-grow overflow-auto">
+                        <TradingJournal />
+                      </div>
+                    </motion.div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle>
+                <motion.div 
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 2, repeat: 1, delay: isLoading ? 1.5 : 0.7 }}
+                  className="absolute inset-0 z-[1] pointer-events-none"
+                />
+              </ResizableHandle>
+              
+              <ResizablePanel 
+                defaultSize={getRightPanelPercentage()} 
+                minSize={minSizePercent}
+                maxSize={maxSizePercent}
+              >
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: isLoading ? 1.5 : 0.6, 
+                    type: "spring", 
+                    stiffness: 100 
+                  }}
+                  className="flex flex-col h-full gap-4"
+                >
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: isLoading ? 1.7 : 0.7 }}
+                    whileHover={{ scale: 1.005 }}
+                    className="flex-grow"
+                  >
+                    <Watchlist />
+                  </motion.div>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: isLoading ? 1.9 : 0.8 }}
+                    whileHover={{ scale: 1.005 }}
+                    className="min-h-[300px]"
+                  >
+                    <ChatAssistant />
+                  </motion.div>
+                </motion.div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </motion.div>
+        }
+      </motion.div>
+    </>
+  )
 }
