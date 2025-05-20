@@ -9,7 +9,7 @@ import ChatAssistant from "@/components/Home/chat-assistant"
 import LoadingScreen from "@/components/ui/LoadingScreen"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/Resizable"
 import { useEffect, useState, useRef } from "react"
-import { useLocalStorage } from "../hooks/useLocalStorage"
+import { useLocalStorage } from "@/hooks/useLocalStorage"
 import { motion, AnimatePresence } from "framer-motion"
 
 const childrenAnimations = {

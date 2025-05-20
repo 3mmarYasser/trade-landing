@@ -77,7 +77,6 @@ export default function AccountSummary() {
               <div className="text-gray-800 text-sm font-medium">0.00</div>
             </div>
             <motion.button 
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="text-gray-500 flex items-center text-sm cursor-pointer hover:text-gray-700 transition-colors whitespace-nowrap"
             >
@@ -172,7 +171,6 @@ export default function AccountSummary() {
                   </div>
                 </div>
                 <motion.button 
-                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="text-gray-500 flex items-center text-xs cursor-pointer hover:text-gray-700 transition-colors self-end mt-1"
                 >
